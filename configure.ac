@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.67])
 AC_INIT([libsshmem], [0.1], [bugs@sequencedsystems.com])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([-Wall gnu])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
 AC_CONFIG_SRCDIR([src/jni_shmem_api.c])

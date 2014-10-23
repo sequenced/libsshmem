@@ -2,7 +2,7 @@
 
 set -o nounset
 
-NUMREADER=5
+NUMREADER=50
 
 rm -f /dev/shm/ringtest
 (./rwr -f ringtest -n ${NUMREADER}; echo $? > rv.w ) & touch rv.w

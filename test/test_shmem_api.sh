@@ -2,7 +2,7 @@
 
 set -o nounset
 
-NUMREADER=5
+NUMREADER=50
 
 rm -f /dev/shm/apitest
 (./apiwr -f apitest -n ${NUMREADER}; echo $? > rv.w ) & touch rv.w

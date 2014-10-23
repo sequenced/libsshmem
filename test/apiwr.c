@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <shmem_api.h>
+#include <sshmem_api.h>
 #include <ringtest.h>
 
 char *pathname=0;

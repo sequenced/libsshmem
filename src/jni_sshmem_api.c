@@ -1,6 +1,6 @@
 #include <jni.h>
-#include <jni_shmem_api.h>
-#include <shmem_api.h>
+#include <jni_sshmem_api.h>
+#include <sshmem_api.h>
 
 mode_t mode=0;
 int elements=64;

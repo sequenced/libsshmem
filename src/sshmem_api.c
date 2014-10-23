@@ -1,7 +1,7 @@
 #include <errno.h>
 #include <string.h>
 #include <ring.h>
-#include <shmem_api.h>
+#include <sshmem_api.h>
 #include <rcommon.h>
 
 /* defaults */

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <shmem_api.h>
+#include <sshmem_api.h>
 
 extern char *pathname;
 extern mode_t mode;

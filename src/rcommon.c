@@ -5,7 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <ring.h>
-#include <ringtest.h>
 
 extern mode_t mode;
 extern int elements;

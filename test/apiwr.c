@@ -19,7 +19,7 @@ main(int argc, char **argv)
   test_init(argc, argv);
 
   int md;
-  if (0<(md=ssys_shmem_open(pathname,
+  if (0>(md=ssys_shmem_open(pathname,
                             SSYS_SHMEM_FLAG_WRITE|SSYS_SHMEM_FLAG_CREATE,
                             mode)))
     {
@@ -54,7 +54,7 @@ main(int argc, char **argv)
         }
     }
 
-  if (0<ssys_shmem_close(md))
+  if (0>ssys_shmem_close(md))
     perror("ssys_shmem_close");
 
   free(pathname);

@@ -22,8 +22,9 @@ throw_new_exception(JNIEnv *env, const char *msg)
 }
 
 JNIEXPORT jint JNICALL
-Java_mxg_io_SharedMemoryChannel_open(JNIEnv *env, jobject this,
-                                     jstring pathname, jint flags, jint mode)
+Java_com_ssys_io_SharedMemoryChannel_open(JNIEnv *env, jobject this,
+                                          jstring pathname, jint flags,
+                                          jint mode)
 {
   const jchar *s=(*env)->GetStringCritical(env, pathname, NULL);
   if (NULL==s)
@@ -38,14 +39,14 @@ Java_mxg_io_SharedMemoryChannel_open(JNIEnv *env, jobject this,
 }
 
 JNIEXPORT jint JNICALL
-Java_mxg_io_SharedMemoryChannel_close(JNIEnv *env, jobject this, jint md)
+Java_com_ssys_io_SharedMemoryChannel_close(JNIEnv *env, jobject this, jint md)
 {
   return ssys_shmem_close(md);
 }
 
 JNIEXPORT jint JNICALL
-Java_mxg_io_SharedMemoryChannel_write(JNIEnv *env, jobject this, jint md,
-                                      jbyteArray buf, jint len, jint off)
+Java_com_ssys_io_SharedMemoryChannel_write(JNIEnv *env, jobject this, jint md,
+                                           jbyteArray buf, jint len, jint off)
 {
   jbyte *b=(*env)->GetByteArrayElements(env, buf, NULL);
   if (NULL==b)
@@ -61,8 +62,8 @@ Java_mxg_io_SharedMemoryChannel_write(JNIEnv *env, jobject this, jint md,
 }
 
 JNIEXPORT jint JNICALL
-Java_mxg_io_SharedMemoryChannel_read(JNIEnv *env, jobject this, jint md,
-                                     jbyteArray buf, jint len, jint off)
+Java_com_ssys_io_SharedMemoryChannel_read(JNIEnv *env, jobject this, jint md,
+                                          jbyteArray buf, jint len, jint off)
 {
   jbyte *b=(*env)->GetByteArrayElements(env, buf, NULL);
   if (NULL==b)

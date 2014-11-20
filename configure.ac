@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([libsshmem], [0.1], [bugs@sequencedsystems.com])
+AC_INIT([libsshmem], [0.2], [bugs@sequencedsystems.com])
 AM_INIT_AUTOMAKE([-Wall gnu])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])

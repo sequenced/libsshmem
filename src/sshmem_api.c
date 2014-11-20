@@ -2,7 +2,6 @@
 #include <string.h>
 #include <ring.h>
 #include <sshmem_api.h>
-#include <rcommon.h>
 
 /* defaults */
 #define MEM_DESC_MAX            64

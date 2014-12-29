@@ -1,5 +1,5 @@
-TESTS = test_ring.sh test_shmem_api.sh
-check_PROGRAMS = rrd rwr apiwr apird rcat
+TESTS = test_ring.sh test_shmem_api.sh test_poll.sh
+check_PROGRAMS = rrd rwr apiwr apird rcat apipoll
 rrd_SOURCES = rrd.c ringtest.c ../src/rcommon.c
 rrd_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src
 rrd_LDFLAGS = -L../src -lsshmem -lrt
@@ -12,6 +12,9 @@ apiwr_LDFLAGS = $(rrd_LDFLAGS)
 apird_SOURCES = apird.c ringtest.c ../src/rcommon.c ../src/sshmem_api.c
 apird_CPPFLAGS = $(rrd_CPPFLAGS)
 apird_LDFLAGS = $(rrd_LDFLAGS)
+apipoll_SOURCES = apipoll.c ringtest.c ../src/rcommon.c ../src/sshmem_api.c
+apipoll_CPPFLAGS = $(rrd_CPPFLAGS)
+apipoll_LDFLAGS = $(rrd_LDFLAGS)
 rcat_SOURCES = rcat.c ringtest.c ../src/rcommon.c ../src/sshmem_api.c
 rcat_CPPFLAGS = $(rrd_CPPFLAGS)
 rcat_LDFLAGS = $(rrd_LDFLAGS)

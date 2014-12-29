@@ -10,6 +10,8 @@
 #define SSYS_SHMEM_ELEMENT_SIZE 2048
 #define SSYS_SHMEM_HEADER_SIZE  64
 
+#define SSYS_DESCRIPTOR_UNASSIGNED(desc) (NULL==memdesc[desc].p)
+
 static ssys_ring_t memdesc[MEM_DESC_MAX];
 static int once=1;
 
@@ -28,7 +30,7 @@ ssys_shmem_open(const char *pathname, int flags, mode_t mode)
       once=0;
     }
 
-  int md=0;
+  int md=0; /* first descriptor is zero */
   while (md<MEM_DESC_MAX+1)
     {
       if (MEM_DESC_MAX==md)
@@ -37,7 +39,7 @@ ssys_shmem_open(const char *pathname, int flags, mode_t mode)
           return -1;
         }
 
-      if (NULL==memdesc[md].p)
+      if (SSYS_DESCRIPTOR_UNASSIGNED(md))
         break;
 
       md++;
@@ -93,7 +95,49 @@ ssys_shmem_close(int md)
 }
 
 int
-ssys_shmem_poll(struct pollfd *fds, nfds_t nfds, int timeout)
+ssys_shmem_poll(struct pollfd *fds, nfds_t nfds, int ignored)
 {
-  return -1;
+  if (NULL==fds)
+    {
+      errno=EINVAL;
+      return -1;
+    }
+
+  int rv;
+  while (nfds>0)
+    {
+      if (fds->events && SSYS_DESCRIPTOR_UNASSIGNED(fds->fd))
+        {
+          /* cannot read or write to an unassigned descriptor */
+          fds->revents=POLLERR;
+          fds++;
+          nfds--;
+          continue;
+        }
+
+      fds->revents=0;
+
+      if (POLLIN&fds->events)
+        {
+          rv=ssys_ring_poll_read(&memdesc[fds->fd]);
+          if (rv)
+            fds->revents|=POLLIN;
+          else if (rv<0)
+            fds->revents|=POLLERR;
+        }
+
+      if (POLLOUT&fds->events)
+        {
+          rv=ssys_ring_poll_write(&memdesc[fds->fd]);
+          if (rv)
+            fds->revents|=POLLOUT;
+          else if (rv<0)
+            fds->revents|=POLLERR;
+        }
+
+      fds++;
+      nfds--;
+    }
+
+  return 0;
 }

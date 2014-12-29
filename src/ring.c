@@ -265,13 +265,41 @@ ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count)
 }
 
 int
-ssys_ring_close(ssys_ring_t *pmd)
+ssys_ring_poll_write(ssys_ring_t *pmd)
 {
-  return 0;
+  if (!is_valid(pmd))
+    return -1;
+
+  if (!SSYS_BIT_ON(SSYS_RING_MODE_PIPE, pmd->mode))
+    /* can always read/write when in buffer mode */
+    return 1;
+
+  void *el=get_nth_element(pmd, pmd->write_desc);
+  atomic_t *dirtyp=get_dirty_flag_ptr(el);
+  if (0L!=atomic_read(dirtyp))
+    /* cannot write: page dirty */
+    return 0;
+
+  /* can write: page clean */
+  return 1;
 }
 
 int
-ssys_ring_poll(ssys_ring_t *pmd, int timeout)
+ssys_ring_poll_read(ssys_ring_t *pmd)
 {
-  return -1;
+  if (!is_valid(pmd))
+    return -1;
+
+  if (!SSYS_BIT_ON(SSYS_RING_MODE_PIPE, pmd->mode))
+    /* can always read when in buffer mode */
+    return 1;
+
+  void *el=get_nth_element(pmd, pmd->read_desc);
+  atomic_t *dirtyp=get_dirty_flag_ptr(el);
+  if (0L==atomic_read(dirtyp))
+    /* already read: page clean */
+    return 0;
+
+  /* can read: page dirty */
+  return 1;
 }

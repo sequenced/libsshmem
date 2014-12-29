@@ -29,7 +29,7 @@ typedef struct
 int ssys_ring_open(ssys_ring_t *pmd, int flags);
 int ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count);
 int ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count);
-int ssys_ring_close(ssys_ring_t *pmd);
-int ssys_ring_poll(ssys_ring_t *pmd, int timeout);
+int ssys_ring_poll_write(ssys_ring_t *pmd);
+int ssys_ring_poll_read(ssys_ring_t *pmd);
 
 #endif /* #ifndef __RING_H__ */

@@ -57,12 +57,6 @@ main(int argc, char **argv)
         done=1;
     }
 
-  if (0>ssys_ring_close(&ring))
-    {
-      perror("ssys_ring_close");
-      exit(1);
-    }
-
   free(pathname);
 
   return 0;

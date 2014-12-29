@@ -6,10 +6,10 @@
 #include <ringtest.h>
 #include <assert.h>
 
+/* referenced in test_init() */
 char *pathname=0;
 mode_t mode=SSYS_SHMEM_MODE_PIPE;
 int readers=1;
-/* unused */
 int elements=0;
 int element_size=0;
 int header_size=0;

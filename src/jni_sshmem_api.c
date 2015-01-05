@@ -1,11 +1,13 @@
+#include <poll.h> /* for struct pollfd */
 #include <jni.h>
 #include <jni_sshmem_api.h>
 #include <sshmem_api.h>
 
 mode_t mode=0;
-int elements=64;
-int element_size=2048;
-int header_size=64;
+int elements=SSYS_SHMEM_ELEMENTS;
+int element_size=SSYS_SHMEM_ELEMENT_SIZE;
+int header_size=SSYS_SHMEM_HEADER_SIZE;
+struct pollfd fds[SSYS_SHMEM_DESC_MAX];
 
 static inline void
 throw_new_exception(JNIEnv *env, const char *msg)
@@ -76,4 +78,46 @@ Java_com_ssys_io_SharedMemoryChannel_read(JNIEnv *env, jobject this, jint md,
   (*env)->ReleaseByteArrayElements(env, buf, b, 0); /* always copy back */
 
   return rv;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_ssys_io_SharedMemoryChannel_poll(JNIEnv *env, jobject this,
+                                          jintArray md,
+                                          jintArray interestedOps,
+                                          jintArray selectedOps, jint len,
+                                          jlong timeout)
+{
+  int md_len=(*env)->GetArrayLength(env, md);
+  if (SSYS_SHMEM_DESC_MAX<len
+      || SSYS_SHMEM_DESC_MAX<md_len
+      || md_len!=(*env)->GetArrayLength(env, interestedOps)
+      || md_len!=(*env)->GetArrayLength(env, selectedOps))
+    {
+      throw_new_exception(env, "poll: bad array length");
+      return -1;
+    }
+
+  jint *pmd=(*env)->GetIntArrayElements(env, md, NULL);
+  if (NULL==pmd)
+    {
+      throw_new_exception(env, "poll: GetByteArrayElements returned null: md");
+      return -1;
+    }
+
+  jint *pInterestedOps=(*env)->GetIntArrayElements(env, interestedOps, NULL);
+  if (NULL==pInterestedOps)
+    {
+      throw_new_exception(env, "poll: GetByteArrayElements returned null: interestedOps");
+      return -1;
+    }
+
+  jint *pSelectedOps=(*env)->GetIntArrayElements(env, selectedOps, NULL);
+  if (NULL==pSelectedOps)
+    {
+      throw_new_exception(env, "poll: GetByteArrayElements returned null: selectedOps");
+      return -1;
+    }
+
+  //TODO
+  return -1;
 }

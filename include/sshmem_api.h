@@ -13,6 +13,12 @@
 #define SSYS_SHMEM_MODE_PIPE   (1<<1)
 #define SSYS_SHMEM_MODE_BUFFER (1<<2)
 
+/* defaults */
+#define SSYS_SHMEM_DESC_MAX     64
+#define SSYS_SHMEM_ELEMENTS     64
+#define SSYS_SHMEM_ELEMENT_SIZE 2048
+#define SSYS_SHMEM_HEADER_SIZE  64
+
 int ssys_shmem_open(const char *pathname, int flags, mode_t mode);
 int ssys_shmem_write(int md, const void *buf, size_t count);
 int ssys_shmem_read(int md, void *buf, size_t count);

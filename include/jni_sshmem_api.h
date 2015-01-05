@@ -49,6 +49,14 @@ JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_read
 JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_close
   (JNIEnv *, jobject, jint);
 
+/*
+ * Class:     com_ssys_io_SharedMemoryChannel
+ * Method:    poll
+ * Signature: ([I[I[IIJ)I
+ */
+JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_poll
+  (JNIEnv *, jobject, jintArray, jintArray, jintArray, jint, jlong);
+
 #ifdef __cplusplus
 }
 #endif

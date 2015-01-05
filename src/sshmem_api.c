@@ -4,15 +4,9 @@
 #include <sshmem_api.h>
 #include <rcommon.h>
 
-/* defaults */
-#define MEM_DESC_MAX            64
-#define SSYS_SHMEM_ELEMENTS     64
-#define SSYS_SHMEM_ELEMENT_SIZE 2048
-#define SSYS_SHMEM_HEADER_SIZE  64
-
 #define SSYS_DESCRIPTOR_UNASSIGNED(desc) (NULL==memdesc[desc].p)
 
-static ssys_ring_t memdesc[MEM_DESC_MAX];
+static ssys_ring_t memdesc[SSYS_SHMEM_DESC_MAX];
 static int once=1;
 
 int
@@ -26,14 +20,14 @@ ssys_shmem_open(const char *pathname, int flags, mode_t mode)
 
   if (once)
     {
-      memset(&memdesc, 0x0, sizeof(ssys_ring_t)*MEM_DESC_MAX);
+      memset(&memdesc, 0x0, sizeof(ssys_ring_t)*SSYS_SHMEM_DESC_MAX);
       once=0;
     }
 
   int md=0; /* first descriptor is zero */
-  while (md<MEM_DESC_MAX+1)
+  while (md<SSYS_SHMEM_DESC_MAX+1)
     {
-      if (MEM_DESC_MAX==md)
+      if (SSYS_SHMEM_DESC_MAX==md)
         {
           errno=EMFILE;
           return -1;
@@ -59,7 +53,7 @@ ssys_shmem_open(const char *pathname, int flags, mode_t mode)
 int
 ssys_shmem_write(int md, const void *buf, size_t count)
 {
-  if (md<0 || MEM_DESC_MAX<=md)
+  if (md<0 || SSYS_SHMEM_DESC_MAX<=md)
     {
       errno=EINVAL;
       return -1;
@@ -71,7 +65,7 @@ ssys_shmem_write(int md, const void *buf, size_t count)
 int
 ssys_shmem_read(int md, void *buf, size_t count)
 {
-  if (md<0 || MEM_DESC_MAX<=md)
+  if (md<0 || SSYS_SHMEM_DESC_MAX<=md)
     {
       errno=EINVAL;
       return -1;
@@ -83,7 +77,7 @@ ssys_shmem_read(int md, void *buf, size_t count)
 int
 ssys_shmem_close(int md)
 {
-  if (md<0 || MEM_DESC_MAX<=md)
+  if (md<0 || SSYS_SHMEM_DESC_MAX<=md)
     {
       errno=EINVAL;
       return -1;

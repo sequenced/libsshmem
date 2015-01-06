@@ -9,6 +9,9 @@ int element_size=SSYS_SHMEM_ELEMENT_SIZE;
 int header_size=SSYS_SHMEM_HEADER_SIZE;
 struct pollfd fds[SSYS_SHMEM_DESC_MAX];
 
+static void copy_pollfd_to_md(jint*, int);
+static void copy_md_to_pollfd(jint*, jint*, int);
+
 static inline void
 throw_new_exception(JNIEnv *env, const char *msg)
 {
@@ -118,6 +121,40 @@ Java_com_ssys_io_SharedMemoryChannel_poll(JNIEnv *env, jobject this,
       return -1;
     }
 
-  //TODO
-  return -1;
+  copy_md_to_pollfd(pmd, pInterestedOps, len);
+  int num=ssys_shmem_poll(fds, len, timeout);
+  if (num)
+    copy_pollfd_to_md(pSelectedOps, len);
+
+  (*env)->ReleaseIntArrayElements(env, selectedOps, pSelectedOps,
+                                  num?0:JNI_ABORT);
+  (*env)->ReleaseIntArrayElements(env, interestedOps, pInterestedOps,
+                                  JNI_ABORT);
+  (*env)->ReleaseIntArrayElements(env, md, pmd, JNI_ABORT);
+
+  return num;
+}
+
+inline void
+copy_pollfd_to_md(jint *ops, int len)
+{
+  int i;
+  for (i=0; i<len; i++)
+    {
+      *ops=fds[i].revents;
+      ops++;
+    }
+}
+
+inline void
+copy_md_to_pollfd(jint *pmd, jint *ops, int len)
+{
+  int i;
+  for (i=0; i<len; i++)
+    {
+      fds[i].fd=*pmd;
+      fds[i].events=ops;
+      pmd++;
+      ops++;
+    }
 }

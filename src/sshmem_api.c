@@ -97,7 +97,7 @@ ssys_shmem_poll(struct pollfd *fds, nfds_t nfds, int ignored)
       return -1;
     }
 
-  int rv;
+  int rv, num=0;
   while (nfds>0)
     {
       if (fds->events && SSYS_DESCRIPTOR_UNASSIGNED(fds->fd))
@@ -129,9 +129,13 @@ ssys_shmem_poll(struct pollfd *fds, nfds_t nfds, int ignored)
             fds->revents|=POLLERR;
         }
 
+      /* count selectable descriptors */
+      if (fds->revents)
+        num++;
+
       fds++;
       nfds--;
     }
 
-  return 0;
+  return num;
 }

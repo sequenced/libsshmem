@@ -7,24 +7,44 @@
 #include <ringtest.h>
 #include <assert.h>
 
+#define BUF_SIZE 64
+
 /* referenced in test_init() */
 char *pathname=0;
-mode_t mode=SSYS_SHMEM_MODE_PIPE;
+mode_t mode=0;
 int readers=1;
 int elements=0;
 int element_size=0;
 int header_size=0;
 
+void test_pipe();
+void test_buffer();
+
 int
 main(int argc, char **argv)
 {
   test_init(argc, argv);
+  test_pipe();
+  test_buffer();
+
+  free(pathname);
+
+  return 0;
+}
+
+void
+test_pipe()
+{
+  char pipename[BUF_SIZE];
+  memset((void*)pipename, 0x0, BUF_SIZE);
+  strcat(pipename, pathname);
+  strcat(pipename, "-pipe");
 
   struct pollfd fds;
   memset((void*)&fds, 0x0, sizeof(fds));
-  if (0<(fds.fd=ssys_shmem_open(pathname,
+  if (0<(fds.fd=ssys_shmem_open(pipename,
                                 SSYS_SHMEM_FLAG_CREATE|SSYS_SHMEM_FLAG_READ,
-                                mode)))
+                                SSYS_SHMEM_MODE_PIPE)))
     {
       perror("ssys_shmem_open");
       exit(1);
@@ -77,8 +97,39 @@ main(int argc, char **argv)
   rv=ssys_shmem_poll(&fds, 1, 0L);
   assert(fds.revents==POLLERR);
   assert(rv==0);
+}
 
-  free(pathname);
+void
+test_buffer()
+{
+  char buffername[BUF_SIZE];
+  memset((void*)buffername, 0x0, BUF_SIZE);
+  strcat(buffername, pathname);
+  strcat(buffername, "-buffer");
 
-  return 0;
+  struct pollfd fds;
+  memset((void*)&fds, 0x0, sizeof(fds));
+  if (0<(fds.fd=ssys_shmem_open(buffername,
+                                SSYS_SHMEM_FLAG_CREATE|SSYS_SHMEM_FLAG_READ,
+                                SSYS_SHMEM_MODE_BUFFER)))
+    {
+      perror("ssys_shmem_open");
+      exit(1);
+    }
+
+  fds.events=POLLIN;
+  int rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==POLLIN);
+  assert(rv==1);
+  fds.events|=POLLOUT;
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==(POLLOUT|POLLIN));
+  assert(rv==1);
+
+  if (0<ssys_shmem_close(fds.fd))
+    perror("ssys_shmem_close");
+
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==POLLERR);
+  assert(rv==0);
 }

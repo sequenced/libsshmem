@@ -49,3 +49,10 @@ alloc_and_map_shmem(ssys_ring_t *pmd, const char *name)
 
   return 0;
 }
+
+int
+free_and_unmap_shmem(ssys_ring_t *pmd)
+{
+  //TODO
+  return -1;
+}

@@ -34,9 +34,10 @@ static inline long
 atomic_xchg(atomic_t *v, long new)
 {
   long rv;
+  volatile atomic_t* _v=v;
   asm volatile("xchgq %0, %1\n\t"
-               : "=r" (rv), "+m" (v->val)
-               : : "memory");
+               : "=r" (rv), "+m" (_v->val)
+               : "0" (new) : "memory");
   return rv;
 }
 

@@ -47,7 +47,7 @@ spin_lock(atomic_t *lock)
 static inline void
 unlock(atomic_t *lock)
 {
-  assert(1L==(atomic_xchg(lock, 1L)));
+  assert(1L==(atomic_xchg(lock, 0L)));
 }
 
 static inline int
@@ -270,8 +270,8 @@ ssys_ring_poll_write(ssys_ring_t *pmd)
   if (!is_valid(pmd))
     return -1;
 
-  if (!SSYS_BIT_ON(SSYS_RING_MODE_PIPE, pmd->mode))
-    /* can always read/write when in buffer mode */
+  if (SSYS_BIT_ON(SSYS_RING_MODE_BUFFER, pmd->mode))
+    /* can always write when in buffer mode */
     return 1;
 
   void *el=get_nth_element(pmd, pmd->write_desc);
@@ -290,7 +290,8 @@ ssys_ring_poll_read(ssys_ring_t *pmd)
   if (!is_valid(pmd))
     return -1;
 
-  if (!SSYS_BIT_ON(SSYS_RING_MODE_PIPE, pmd->mode))
+  // TODO assumption does not hold
+  if (SSYS_BIT_ON(SSYS_RING_MODE_BUFFER, pmd->mode))
     /* can always read when in buffer mode */
     return 1;
 

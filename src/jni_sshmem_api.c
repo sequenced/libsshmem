@@ -153,7 +153,7 @@ copy_md_to_pollfd(jint *pmd, jint *ops, int len)
   for (i=0; i<len; i++)
     {
       fds[i].fd=*pmd;
-      fds[i].events=ops;
+      fds[i].events=*ops;
       pmd++;
       ops++;
     }

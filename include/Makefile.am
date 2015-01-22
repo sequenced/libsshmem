@@ -1,1 +1,1 @@
-include_HEADERS = jni_sshmem_api.h sshmem_api.h
+include_HEADERS = jni_sshmem_channel.h jni_sshmem_selector.h sshmem_api.h

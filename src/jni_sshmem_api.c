@@ -1,6 +1,7 @@
 #include <poll.h> /* for struct pollfd */
 #include <jni.h>
-#include <jni_sshmem_api.h>
+#include <jni_sshmem_channel.h>
+#include <jni_sshmem_selector.h>
 #include <sshmem_api.h>
 
 mode_t mode=0;
@@ -27,14 +28,14 @@ throw_new_exception(JNIEnv *env, const char *msg)
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ssys_io_SharedMemoryChannel_open(JNIEnv *env, jobject this,
-                                          jstring pathname, jint flags,
-                                          jint mode)
+Java_com_ssys_io_SharedMemoryChannel_implOpen(JNIEnv *env, jobject this,
+                                              jstring pathname, jint flags,
+                                              jint mode)
 {
   const jchar *s=(*env)->GetStringCritical(env, pathname, NULL);
   if (NULL==s)
     {
-      throw_new_exception(env, "open: GetStringCritical returned null");
+      throw_new_exception(env, "implOpen: GetStringCritical returned null");
       return -1;
     }
 
@@ -44,19 +45,20 @@ Java_com_ssys_io_SharedMemoryChannel_open(JNIEnv *env, jobject this,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ssys_io_SharedMemoryChannel_close(JNIEnv *env, jobject this, jint md)
+Java_com_ssys_io_SharedMemoryChannel_implClose(JNIEnv *env, jobject this,
+                                               jint md)
 {
   return ssys_shmem_close(md);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ssys_io_SharedMemoryChannel_write(JNIEnv *env, jobject this, jint md,
+Java_com_ssys_io_SharedMemoryChannel_implWrite(JNIEnv *env, jobject this, jint md,
                                            jbyteArray buf, jint len, jint off)
 {
   jbyte *b=(*env)->GetByteArrayElements(env, buf, NULL);
   if (NULL==b)
     {
-      throw_new_exception(env, "write: GetByteArrayElements returned null");
+      throw_new_exception(env, "implWrite: GetByteArrayElements returned null");
       return -1;
     }
 
@@ -67,13 +69,13 @@ Java_com_ssys_io_SharedMemoryChannel_write(JNIEnv *env, jobject this, jint md,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ssys_io_SharedMemoryChannel_read(JNIEnv *env, jobject this, jint md,
+Java_com_ssys_io_SharedMemoryChannel_implRead(JNIEnv *env, jobject this, jint md,
                                           jbyteArray buf, jint len, jint off)
 {
   jbyte *b=(*env)->GetByteArrayElements(env, buf, NULL);
   if (NULL==b)
     {
-      throw_new_exception(env, "read: GetByteArrayElements returned null");
+      throw_new_exception(env, "implRead: GetByteArrayElements returned null");
       return -1;
     }
 
@@ -84,11 +86,9 @@ Java_com_ssys_io_SharedMemoryChannel_read(JNIEnv *env, jobject this, jint md,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ssys_io_SharedMemoryChannel_poll(JNIEnv *env, jobject this,
-                                          jintArray md,
-                                          jintArray interestedOps,
-                                          jintArray selectedOps, jint len,
-                                          jlong timeout)
+Java_com_ssys_io_Selector2_poll(JNIEnv *env, jobject this, jintArray md,
+                                jintArray interestedOps,
+                                jintArray selectedOps, jint len, jlong timeout)
 {
   int md_len=(*env)->GetArrayLength(env, md);
   if (SSYS_SHMEM_DESC_MAX<len

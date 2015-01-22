@@ -17,45 +17,43 @@ extern "C" {
 #define com_ssys_io_SharedMemoryChannel_PIPE 2L
 #undef com_ssys_io_SharedMemoryChannel_BUFFER
 #define com_ssys_io_SharedMemoryChannel_BUFFER 4L
+#undef com_ssys_io_SharedMemoryChannel_POLLIN
+#define com_ssys_io_SharedMemoryChannel_POLLIN 1L
+#undef com_ssys_io_SharedMemoryChannel_POLLOUT
+#define com_ssys_io_SharedMemoryChannel_POLLOUT 4L
+#undef com_ssys_io_SharedMemoryChannel_UNASSIGNED
+#define com_ssys_io_SharedMemoryChannel_UNASSIGNED -1L
 /*
  * Class:     com_ssys_io_SharedMemoryChannel
- * Method:    open
+ * Method:    implOpen
  * Signature: (Ljava/lang/String;II)I
  */
-JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_open
+JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_implOpen
   (JNIEnv *, jobject, jstring, jint, jint);
 
 /*
  * Class:     com_ssys_io_SharedMemoryChannel
- * Method:    write
+ * Method:    implWrite
  * Signature: (I[BII)I
  */
-JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_write
+JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_implWrite
   (JNIEnv *, jobject, jint, jbyteArray, jint, jint);
 
 /*
  * Class:     com_ssys_io_SharedMemoryChannel
- * Method:    read
+ * Method:    implRead
  * Signature: (I[BII)I
  */
-JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_read
+JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_implRead
   (JNIEnv *, jobject, jint, jbyteArray, jint, jint);
 
 /*
  * Class:     com_ssys_io_SharedMemoryChannel
- * Method:    close
+ * Method:    implClose
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_close
+JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_implClose
   (JNIEnv *, jobject, jint);
-
-/*
- * Class:     com_ssys_io_SharedMemoryChannel
- * Method:    poll
- * Signature: ([I[I[IIJ)I
- */
-JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemoryChannel_poll
-  (JNIEnv *, jobject, jintArray, jintArray, jintArray, jint, jlong);
 
 #ifdef __cplusplus
 }

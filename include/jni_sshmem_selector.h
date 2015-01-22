@@ -9,6 +9,14 @@ extern "C" {
 #endif
 /*
  * Class:     com_ssys_io_Selector2
+ * Method:    getMaximumDescriptors
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_com_ssys_io_Selector2_getMaximumDescriptors
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_ssys_io_Selector2
  * Method:    poll
  * Signature: ([I[I[IIJ)I
  */

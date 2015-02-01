@@ -86,16 +86,18 @@ Java_com_ssys_io_SharedMemoryChannel_implRead(JNIEnv *env, jobject this, jint md
 }
 
 JNIEXPORT jint
-JNICALL Java_com_ssys_io_Selector2_getMaximumDescriptors(JNIEnv *env,
-                                                         jobject this)
+JNICALL Java_com_ssys_io_SharedMemorySelector_getMaximumDescriptors(JNIEnv *env,
+                                                                    jobject this)
 {
   return (SSYS_SHMEM_DESC_MAX);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_ssys_io_Selector2_poll(JNIEnv *env, jobject this, jintArray md,
-                                jintArray interestedOps,
-                                jintArray selectedOps, jint len, jlong timeout)
+Java_com_ssys_io_SharedMemorySelector_poll(JNIEnv *env, jobject this,
+                                           jintArray md,
+                                           jintArray interestedOps,
+                                           jintArray selectedOps, jint len,
+                                           jlong timeout)
 {
   int md_len=(*env)->GetArrayLength(env, md);
   if (SSYS_SHMEM_DESC_MAX<len

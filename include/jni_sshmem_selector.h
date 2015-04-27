@@ -29,3 +29,14 @@ JNIEXPORT jint JNICALL Java_com_ssys_io_SharedMemorySelector_poll
 }
 #endif
 #endif
+/* Header for class com_ssys_io_SharedMemorySelector_ReadOnlySet */
+
+#ifndef _Included_com_ssys_io_SharedMemorySelector_ReadOnlySet
+#define _Included_com_ssys_io_SharedMemorySelector_ReadOnlySet
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef __cplusplus
+}
+#endif
+#endif

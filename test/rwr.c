@@ -8,10 +8,13 @@
 
 char *pathname=0;
 mode_t mode=SSYS_RING_MODE_PIPE;
+int flags=SSYS_RING_FLAG_WRITE;
 int readers=1;
 int elements=RING_ELEMENTS;
 int element_size=RING_ELEMENT_SIZE;
 int header_size=RING_HEADER_SIZE;
+char *payload=0;
+int payload_len=0;
 
 int
 main(int argc, char **argv)
@@ -25,28 +28,39 @@ main(int argc, char **argv)
       exit(1);
     }
 
-  if (0>ssys_ring_open(&ring, SSYS_RING_FLAG_WRITE|SSYS_RING_FLAG_CREATE))
+  if (0>ssys_ring_open(&ring, flags))
     {
       perror("ssys_ring_open");
       exit(1);
     }
 
-  long i;
-  for (i=0L; i<(READ_WRITE_SAMPLES+readers); i++)
-    {
-      char buf[READ_WRITE_PAYLOAD_SIZE];
-      memset((void*)buf, 0x0, READ_WRITE_PAYLOAD_SIZE);
+  long samples=READ_WRITE_SAMPLES;
+  /* single write per reader */
+  if (payload)
+    samples=0L;
 
-      if (i<READ_WRITE_SAMPLES)
-        *(long*)(buf)=i;
+  long i;
+  for (i=0L; i<(samples+readers); i++)
+    {
+      const int len=(payload==0?READ_WRITE_PAYLOAD_SIZE:payload_len);
+      char buf[len];
+      memset((void*)buf, 0x0, len);
+
+      if (payload)
+        memcpy(buf, payload, len);
       else
         {
-          *(long*)(buf)=0xdeadbeef;
-          *(long*)(buf+sizeof(long))='@'; /* EOF marker */
+          if (i<samples)
+            *(long*)(buf)=i;
+          else
+            {
+              *(long*)(buf)=0xdeadbeef;
+              *(long*)(buf+sizeof(long))='@'; /* EOF marker */
+            }
         }
 
     again:
-      if (0>ssys_ring_write(&ring, buf, READ_WRITE_PAYLOAD_SIZE))
+      if (0>ssys_ring_write(&ring, buf, len))
         {
           if (EAGAIN!=errno)
             {
@@ -59,6 +73,8 @@ main(int argc, char **argv)
     }
 
   free(pathname);
+  if (payload)
+    free(payload);
 
   return 0;
 }

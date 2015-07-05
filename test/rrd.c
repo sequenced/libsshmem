@@ -9,10 +9,13 @@
 
 char *pathname=0;
 mode_t mode=SSYS_RING_MODE_PIPE;
+int flags=SSYS_RING_FLAG_READ;
 int readers=1;
 int elements=RING_ELEMENTS;
 int element_size=RING_ELEMENT_SIZE;
 int header_size=RING_HEADER_SIZE;
+char *payload=0;
+int payload_len=0;
 
 int
 main(int argc, char **argv)
@@ -26,7 +29,7 @@ main(int argc, char **argv)
       exit(1);
     }
 
-  if (0>ssys_ring_open(&ring, SSYS_RING_FLAG_READ))
+  if (0>ssys_ring_open(&ring, flags))
     {
       perror("ssys_ring_open");
       exit(1);
@@ -35,11 +38,12 @@ main(int argc, char **argv)
   int done=0;
   while (!done)
     {
-      char buf[READ_WRITE_PAYLOAD_SIZE];
-      memset((void*)buf, 0x0, READ_WRITE_PAYLOAD_SIZE);
-      int len;
+      const int len=(payload==0?READ_WRITE_PAYLOAD_SIZE:payload_len);
+      char buf[len];
+      memset((void*)buf, 0x0, len);
+      int actual_len;
     again:
-      if (0>(len=ssys_ring_read(&ring, buf, READ_WRITE_PAYLOAD_SIZE)))
+      if (0>(actual_len=ssys_ring_read(&ring, buf, len)))
         {
           if (EAGAIN!=errno)
             {
@@ -50,14 +54,26 @@ main(int argc, char **argv)
           goto again;
         }
 
-      assert(len==READ_WRITE_PAYLOAD_SIZE);
+      assert(actual_len==len);
 
-      long eof=*(long*)(buf+sizeof(long));
-      if ('@'==eof)
-        done=1;
+      if (payload)
+        {
+          char *s=buf;
+          while (0<actual_len--)
+            putchar(*s++);
+          printf("\n");
+        }
+      else
+        {
+          long eof=*(long*)(buf+sizeof(long));
+          if ('@'==eof)
+            done=1;
+        }
     }
 
   free(pathname);
+  if (payload)
+    free(payload);
 
   return 0;
 }

@@ -5,7 +5,7 @@ set -o nounset
 NUMREADER=50
 
 rm -f /dev/shm/ringtest
-(./rwr -f ringtest -n ${NUMREADER}; echo $? > rv.w ) & touch rv.w
+(./rwr -c -f ringtest -n ${NUMREADER}; echo $? > rv.w ) & touch rv.w
 for i in `seq ${NUMREADER}`; do
     (./rrd -f ringtest ; echo $? > rv.$i ) & touch rv.$i ;
 done

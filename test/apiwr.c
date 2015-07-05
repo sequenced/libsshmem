@@ -7,11 +7,14 @@
 
 char *pathname=0;
 mode_t mode=SSYS_SHMEM_MODE_PIPE;
+int flags=0;
 int readers=1;
 /* unused */
 int elements=0;
 int element_size=0;
 int header_size=0;
+char *payload=0;
+int payload_len=0;
 
 int
 main(int argc, char **argv)

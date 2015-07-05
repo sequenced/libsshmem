@@ -12,10 +12,13 @@
 /* referenced in test_init() */
 char *pathname=0;
 mode_t mode=0;
+int flags=0;
 int readers=1;
 int elements=0;
 int element_size=0;
 int header_size=0;
+char *payload=0;
+int payload_len=0;
 
 void test_pipe();
 void test_buffer();

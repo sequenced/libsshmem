@@ -7,10 +7,13 @@
 
 char *pathname=0;
 mode_t mode=SSYS_RING_MODE_PIPE;
+int flags=SSYS_RING_FLAG_READ;
 int readers=1;
 int elements=RING_ELEMENTS;
 int element_size=RING_ELEMENT_SIZE;
 int header_size=RING_HEADER_SIZE;
+char *payload=0;
+int payload_len=0;
 
 int
 main(int argc, char **argv)
@@ -25,7 +28,7 @@ main(int argc, char **argv)
     }
 
   /* not strictly necessary but validates ring parameters */
-  if (0>ssys_ring_open(&ring, SSYS_RING_FLAG_READ))
+  if (0>ssys_ring_open(&ring, flags))
     {
       perror("ssys_ring_open");
       exit(1);

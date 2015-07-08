@@ -32,15 +32,15 @@ Java_com_ssys_io_SharedMemoryChannel_implOpen(JNIEnv *env, jobject this,
                                               jstring pathname, jint flags,
                                               jint mode)
 {
-  const jchar *s=(*env)->GetStringCritical(env, pathname, NULL);
+  const char *s=(*env)->GetStringUTFChars(env, pathname, NULL);
   if (NULL==s)
     {
-      throw_new_exception(env, "implOpen: GetStringCritical returned null");
+      throw_new_exception(env, "implOpen: GetStringUTFChars returned null");
       return -1;
     }
 
-  int rv=ssys_shmem_open((const char*)s, flags, mode);
-  (*env)->ReleaseStringCritical(env, pathname, s);
+  int rv=ssys_shmem_open(s, flags, mode);
+  (*env)->ReleaseStringUTFChars(env, pathname, s);
   return rv;
 }
 

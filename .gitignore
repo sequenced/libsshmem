@@ -2,3 +2,5 @@
 .dep
 *~
 TAGS
+Makefile
+Makefile.in

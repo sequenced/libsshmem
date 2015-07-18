@@ -1,4 +1,8 @@
 *.o
 .dep
 *~
+*.in
+*.guess
+*.sub
 TAGS
+Makefile

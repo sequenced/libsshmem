@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = subdir-objects
 TESTS = test_ring.sh test_shmem_api.sh test_poll.sh
 check_PROGRAMS = rrd rwr apiwr apird rcat apipoll
 rrd_SOURCES = rrd.c ringtest.c ../src/rcommon.c

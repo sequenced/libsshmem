@@ -55,8 +55,15 @@ test_pipe()
 
   fds.events=POLLIN;
   int rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.events==POLLIN);
   assert(fds.revents==0);
   assert(rv==0);
+
+  fds.events=POLLOUT;
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.events==POLLOUT);
+  assert(fds.revents==POLLOUT);
+  assert(rv==1);
 
   long payload=0xdeadbeef;
   if (0>ssys_shmem_write(fds.fd, &payload, sizeof(long)))
@@ -65,6 +72,7 @@ test_pipe()
       exit(1);
     }
 
+  fds.events=POLLIN;
   rv=ssys_shmem_poll(&fds, 1, 0L);
   assert(fds.revents==POLLIN);
   assert(rv==1);

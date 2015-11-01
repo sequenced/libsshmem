@@ -138,6 +138,12 @@ ssys_ring_open(ssys_ring_t *pmd, int flags)
   pmd->write_desc=0;
   pmd->read_desc=0;
 
+  if (SSYS_BIT_ON(SSYS_RING_FLAG_READ, flags))
+    ring_seek_tail(pmd);
+
+  if (SSYS_BIT_ON(SSYS_RING_FLAG_WRITE, flags))
+    ring_seek_head(pmd);
+
   return 0;
 }
 

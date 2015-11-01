@@ -26,13 +26,17 @@ alloc_and_map_shmem(ssys_ring_t *pmd, const char *name)
 {
   int fd;
   if (0>(fd=shm_open(name, O_RDWR, S_IRUSR|S_IWUSR)))
-    if (0>(fd=shm_open(name, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR)))
-      return -1;
-
-  if (0>ftruncate(fd, pmd->num_elements*pmd->element_size))
     {
-      shm_unlink(name);
-      return -1;
+      /* shared memory object does not exist, create it */
+      if (0>(fd=shm_open(name, O_EXCL|O_CREAT|O_RDWR, S_IRUSR|S_IWUSR)))
+        return -1;
+
+      if (0>ftruncate(fd, pmd->num_elements*pmd->element_size))
+        {
+          shm_unlink(name);
+          close(fd);
+          return -1;
+        }
     }
 
   if (MAP_FAILED==(pmd->p=mmap(NULL,
@@ -43,9 +47,12 @@ alloc_and_map_shmem(ssys_ring_t *pmd, const char *name)
                                0)))
     {
       shm_unlink(name);
+      close(fd);
       pmd->p=NULL;
       return -1;
     }
+
+  close(fd);
 
   return 0;
 }

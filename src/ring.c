@@ -100,12 +100,12 @@ ring_seek_head(ssys_ring_t *pmd)
   atomic_t *seqp=get_seq_ptr(el);
   long seq=atomic_read(seqp);
 
-  if (UNASSIGNED_SEQ==seq)
+  if (UNASSIGNED_SEQ == seq)
     return seq;
 
-  if (pmd->write_desc<=seq)
+  if (pmd->write_desc <= seq)
     {
-      pmd->write_desc++;
+      pmd->write_desc=seq + 1;
       goto again;
     }
 
@@ -137,12 +137,6 @@ ssys_ring_open(ssys_ring_t *pmd, int flags)
 
   pmd->write_desc=0;
   pmd->read_desc=0;
-
-  if (SSYS_BIT_ON(SSYS_RING_FLAG_READ, flags))
-    ring_seek_tail(pmd);
-
-  if (SSYS_BIT_ON(SSYS_RING_FLAG_WRITE, flags))
-    ring_seek_head(pmd);
 
   return 0;
 }

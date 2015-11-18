@@ -73,24 +73,22 @@ ring_seek_tail(ssys_ring_t *pmd)
   atomic_t *seqp=get_seq_ptr(el);
   long seq=atomic_read(seqp);
 
-  if (UNASSIGNED_SEQ==seq)
+  if (UNASSIGNED_SEQ == seq)
     return -1;
 
-  if (pmd->read_desc<seq)
+  if (pmd->read_desc <= seq)
     {
-      pmd->read_desc++;
+      pmd->read_desc=seq + 1;
       goto again;
     }
 
-  if (pmd->read_desc>seq)
-    /* At head, nothing to read, try again later. */
-    return -1;
-
-  assert(pmd->read_desc==seq);
+  assert(pmd->read_desc > seq);
 
   return seq;
 }
 
+//TODO instead of descriptor use local variable to count and compare
+//TODO return value is highest sequence (head) and lowest sequence (tail)
 static inline long
 ring_seek_head(ssys_ring_t *pmd)
 {
@@ -114,6 +112,69 @@ ring_seek_head(ssys_ring_t *pmd)
   return seq;
 }
 
+struct head_tail
+{
+  long head;
+  long tail;
+};
+typedef struct head_tail head_tail_t;
+
+static inline void
+ring_seek_head_tail(const ssys_ring_t *pmd, head_tail_t *hl)
+{
+  void *el;
+  //  long seq;
+
+  hl->head = 0L;
+  hl->tail = UNASSIGNED_SEQ;
+
+  while (1)
+    {
+      el=get_nth_element(pmd, hl->head);
+      atomic_t *seqp=get_seq_ptr(el);
+      hl->tail=atomic_read(seqp);
+
+      if (UNASSIGNED_SEQ == hl->tail)
+        break;
+
+      if (hl->head <= hl->tail)
+        hl->head=hl->tail + 1L;
+      else
+        break;
+    }
+}
+/*
+static inline int
+ring_seek_hi_lo(ssys_ring_t *pmd, struct hi_lo *s)
+{
+  s->hi=UNASSIGNED_SEQ;
+  s->lo=UNASSIGNED_SEQ;
+
+  void *el;
+  long next_seq=0L;
+ again:
+  el=get_nth_element(pmd, next_seq);
+  atomic_t *seqp=get_seq_ptr(el);
+  long seq=atomic_read(seqp);
+
+  if (UNASSIGNED_SEQ == seq)
+    goto exit;
+
+  if (next_seq <= seq)
+    {
+      next_seq=seq + 1;
+      goto again;
+    }
+
+  assert(next_seq > seq);
+
+ exit:
+  s->hi=next_seq;
+  s->lo=seq;
+
+  return seq;
+}
+*/
 int
 ssys_ring_open(ssys_ring_t *pmd, int flags)
 {
@@ -155,10 +216,10 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
       return -1;
     }
 
-  long old;
+  head_tail_t seqs;
  again:
-  old=ring_seek_head(pmd);
-  void *el=get_nth_element(pmd, pmd->write_desc);
+  ring_seek_head_tail(pmd, &seqs);
+  void *el=get_nth_element(pmd, seqs.head);
   
   atomic_t *lockp=get_lock_ptr(el);
   if (!spin_lock(lockp))
@@ -181,7 +242,7 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
     }
 
   atomic_t *seqp=get_seq_ptr(el);
-  if (old!=atomic_cmpxchg(seqp, old, pmd->write_desc))
+  if (seqs.tail!=atomic_cmpxchg(seqp, seqs.tail, seqs.head))
     {
       /* sequence consumed, someone was quicker */
       unlock(lockp);
@@ -196,7 +257,6 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
 
   store_barrier();
   unlock(lockp);
-  pmd->write_desc++;
   return count;
 }
 
@@ -212,13 +272,29 @@ ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count)
       return -1;
     }
 
-  long old;
+  struct head_tail seqs;
  again:
-  if (0>(old=ring_seek_tail(pmd)))
+  ring_seek_head_tail(pmd, &seqs);
+
+  /* ring empty */
+  if (0L == seqs.head)
     {
       errno=EAGAIN;
       return -1;
     }
+
+
+  /* at head, nothing left to read */
+  if (pmd->read_desc >= seqs.head)
+    {
+      errno=EAGAIN;
+      return -1;
+    }
+  else if (pmd->read_desc < seqs.tail)
+    pmd->read_desc = seqs.tail;
+
+  if (UNASSIGNED_SEQ == seqs.tail)
+    pmd->read_desc=0L;
 
   void *el=get_nth_element(pmd, pmd->read_desc);
 
@@ -232,7 +308,7 @@ ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count)
   atomic_t *seqp=get_seq_ptr(el);
   long seq=atomic_read(seqp);
     
-  if (old!=seq)
+  if (pmd->read_desc != seq)
     {
       unlock(lockp);
       goto again;

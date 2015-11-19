@@ -201,7 +201,7 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
 
   store_barrier();
   unlock(lockp);
-  pmd->write_desc=seqs.head;
+  pmd->write_desc=seqs.head + 1L;
   return count;
 }
 

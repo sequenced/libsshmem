@@ -20,6 +20,7 @@
  *
  */
 
+#define START_SEQ 0L
 #define UNASSIGNED_SEQ -1L
 #define ring_mask(pmd) (pmd->num_elements-1)
 #define get_nth_element(pmd, i)                         \
@@ -31,6 +32,13 @@
   (atomic_t*)(((char*)element)+(2*sizeof(atomic_t)))
 #define get_payload_ptr(element, header_size)   \
   (void*)(((char*)element)+header_size)
+
+struct head_tail
+{
+  long head; /* highest sequence in ring ("head") */
+  long tail; /* lowest sequence in ring ("tail") */
+};
+typedef struct head_tail head_tail_t;
 
 static inline int
 spin_lock(atomic_t *lock)
@@ -87,94 +95,30 @@ ring_seek_tail(ssys_ring_t *pmd)
   return seq;
 }
 
-//TODO instead of descriptor use local variable to count and compare
-//TODO return value is highest sequence (head) and lowest sequence (tail)
-static inline long
-ring_seek_head(ssys_ring_t *pmd)
-{
-  void *el;
- again:
-  el=get_nth_element(pmd, pmd->write_desc);
-  atomic_t *seqp=get_seq_ptr(el);
-  long seq=atomic_read(seqp);
-
-  if (UNASSIGNED_SEQ == seq)
-    return seq;
-
-  if (pmd->write_desc <= seq)
-    {
-      pmd->write_desc=seq + 1;
-      goto again;
-    }
-
-  assert(pmd->write_desc>seq);
-
-  return seq;
-}
-
-struct head_tail
-{
-  long head;
-  long tail;
-};
-typedef struct head_tail head_tail_t;
-
 static inline void
-ring_seek_head_tail(const ssys_ring_t *pmd, head_tail_t *hl)
+ring_seek_head_tail(const ssys_ring_t *pmd, head_tail_t *ht)
 {
   void *el;
-  //  long seq;
 
-  hl->head = 0L;
-  hl->tail = UNASSIGNED_SEQ;
+  ht->head = START_SEQ;
+  ht->tail = UNASSIGNED_SEQ;
 
   while (1)
     {
-      el=get_nth_element(pmd, hl->head);
+      el=get_nth_element(pmd, ht->head);
       atomic_t *seqp=get_seq_ptr(el);
-      hl->tail=atomic_read(seqp);
+      ht->tail=atomic_read(seqp);
 
-      if (UNASSIGNED_SEQ == hl->tail)
+      if (UNASSIGNED_SEQ == ht->tail)
         break;
 
-      if (hl->head <= hl->tail)
-        hl->head=hl->tail + 1L;
+      if (ht->head <= ht->tail)
+        ht->head=ht->tail + 1L;
       else
         break;
     }
 }
-/*
-static inline int
-ring_seek_hi_lo(ssys_ring_t *pmd, struct hi_lo *s)
-{
-  s->hi=UNASSIGNED_SEQ;
-  s->lo=UNASSIGNED_SEQ;
 
-  void *el;
-  long next_seq=0L;
- again:
-  el=get_nth_element(pmd, next_seq);
-  atomic_t *seqp=get_seq_ptr(el);
-  long seq=atomic_read(seqp);
-
-  if (UNASSIGNED_SEQ == seq)
-    goto exit;
-
-  if (next_seq <= seq)
-    {
-      next_seq=seq + 1;
-      goto again;
-    }
-
-  assert(next_seq > seq);
-
- exit:
-  s->hi=next_seq;
-  s->lo=seq;
-
-  return seq;
-}
-*/
 int
 ssys_ring_open(ssys_ring_t *pmd, int flags)
 {
@@ -196,8 +140,8 @@ ssys_ring_open(ssys_ring_t *pmd, int flags)
       store_barrier();
     }
 
-  pmd->write_desc=0;
-  pmd->read_desc=0;
+  pmd->write_desc=START_SEQ;
+  pmd->read_desc=START_SEQ;
 
   return 0;
 }
@@ -220,7 +164,7 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
  again:
   ring_seek_head_tail(pmd, &seqs);
   void *el=get_nth_element(pmd, seqs.head);
-  
+
   atomic_t *lockp=get_lock_ptr(el);
   if (!spin_lock(lockp))
     {
@@ -257,7 +201,32 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
 
   store_barrier();
   unlock(lockp);
+  pmd->write_desc=seqs.head;
   return count;
+}
+
+static inline int
+ring_is_readable(ssys_ring_t *pmd, head_tail_t *ht)
+{
+  if (START_SEQ == ht->head &&
+      UNASSIGNED_SEQ == ht->tail)
+    {
+      /* ring empty */
+      errno=EAGAIN;
+      return -1;
+    }
+
+  if (pmd->read_desc >= ht->head)
+    {
+      /* at head, nothing left to read */
+      errno=EAGAIN;
+      return -1;
+    }
+  else if (pmd->read_desc < ht->tail)
+    /* read from tail onwards when in buffer mode */
+    pmd->read_desc = ht->tail;
+
+  return 0;
 }
 
 int
@@ -272,32 +241,14 @@ ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count)
       return -1;
     }
 
-  struct head_tail seqs;
+  head_tail_t seqs;
  again:
   ring_seek_head_tail(pmd, &seqs);
 
-  /* ring empty */
-  if (0L == seqs.head)
-    {
-      errno=EAGAIN;
-      return -1;
-    }
-
-
-  /* at head, nothing left to read */
-  if (pmd->read_desc >= seqs.head)
-    {
-      errno=EAGAIN;
-      return -1;
-    }
-  else if (pmd->read_desc < seqs.tail)
-    pmd->read_desc = seqs.tail;
-
-  if (UNASSIGNED_SEQ == seqs.tail)
-    pmd->read_desc=0L;
+  if (0>ring_is_readable(pmd, &seqs))
+    return -1;
 
   void *el=get_nth_element(pmd, pmd->read_desc);
-
   atomic_t *lockp=get_lock_ptr(el);
   if (!spin_lock(lockp))
     {
@@ -307,7 +258,7 @@ ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count)
     
   atomic_t *seqp=get_seq_ptr(el);
   long seq=atomic_read(seqp);
-    
+
   if (pmd->read_desc != seq)
     {
       unlock(lockp);
@@ -366,10 +317,12 @@ ssys_ring_poll_read(ssys_ring_t *pmd)
   if (!is_valid(pmd))
     return -1;
 
-  // TODO assumption does not hold
   if (SSYS_BIT_ON(SSYS_RING_MODE_BUFFER, pmd->mode))
-    /* can always read when in buffer mode */
-    return 1;
+    {
+      head_tail_t seqs;
+      ring_seek_head_tail(pmd, &seqs);
+      return ring_is_readable(pmd, &seqs);
+    }
 
   void *el=get_nth_element(pmd, pmd->read_desc);
   atomic_t *dirtyp=get_dirty_flag_ptr(el);

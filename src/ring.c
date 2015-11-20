@@ -72,29 +72,6 @@ is_valid(ssys_ring_t *pmd)
   return 0;
 }
 
-static inline long
-ring_seek_tail(ssys_ring_t *pmd)
-{
-  void *el;
- again:
-  el=get_nth_element(pmd, pmd->read_desc);
-  atomic_t *seqp=get_seq_ptr(el);
-  long seq=atomic_read(seqp);
-
-  if (UNASSIGNED_SEQ == seq)
-    return -1;
-
-  if (pmd->read_desc <= seq)
-    {
-      pmd->read_desc=seq + 1;
-      goto again;
-    }
-
-  assert(pmd->read_desc > seq);
-
-  return seq;
-}
-
 static inline void
 ring_seek_head_tail(const ssys_ring_t *pmd, head_tail_t *ht)
 {

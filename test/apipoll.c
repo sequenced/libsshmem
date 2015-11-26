@@ -108,6 +108,23 @@ test_pipe()
   rv=ssys_shmem_poll(&fds, 1, 0L);
   assert(fds.revents==POLLERR);
   assert(rv==0);
+
+  /* re-open pipe w/o create flag */
+  memset((void*)&fds, 0x0, sizeof(fds));
+  if (0<(fds.fd=ssys_shmem_open(pipename,
+                                SSYS_SHMEM_FLAG_READ,
+                                SSYS_SHMEM_MODE_PIPE)))
+    {
+      perror("ssys_shmem_open");
+      exit(1);
+    }
+
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==(POLLIN|POLLOUT));
+  assert(rv==1);
+
+  if (0<ssys_shmem_close(fds.fd))
+    perror("ssys_shmem_close");
 }
 
 void

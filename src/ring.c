@@ -117,7 +117,6 @@ ssys_ring_open(ssys_ring_t *pmd, int flags)
       store_barrier();
     }
 
-  pmd->write_desc=START_SEQ;
   pmd->read_desc=START_SEQ;
 
   return 0;
@@ -178,7 +177,6 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
 
   store_barrier();
   unlock(lockp);
-  pmd->write_desc=seqs.head + 1L;
   return count;
 }
 
@@ -279,7 +277,9 @@ ssys_ring_poll_write(ssys_ring_t *pmd)
     /* can always write when in buffer mode */
     return 1;
 
-  void *el=get_nth_element(pmd, pmd->write_desc);
+  head_tail_t seqs;
+  ring_seek_head_tail(pmd, &seqs);
+  void *el=get_nth_element(pmd, seqs.head);
   atomic_t *dirtyp=get_dirty_flag_ptr(el);
   if (0L!=atomic_read(dirtyp))
     /* cannot write: page dirty */

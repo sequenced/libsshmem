@@ -23,7 +23,6 @@ typedef struct
   unsigned int header_size;
   mode_t mode;
   long read_desc;
-  long write_desc;
 } ssys_ring_t;
 
 int ssys_ring_open(ssys_ring_t *pmd, int flags);

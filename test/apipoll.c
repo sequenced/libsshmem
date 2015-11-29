@@ -83,7 +83,6 @@ test_pipe()
       perror("ssys_shmem_read");
       exit(1);
     }
-
   assert(0xdeadbeef==payload);
 
   fds.events=(POLLIN|POLLOUT);
@@ -112,7 +111,7 @@ test_pipe()
   /* re-open pipe w/o create flag */
   memset((void*)&fds, 0x0, sizeof(fds));
   if (0<(fds.fd=ssys_shmem_open(pipename,
-                                SSYS_SHMEM_FLAG_READ,
+                                SSYS_SHMEM_FLAG_READ|SSYS_SHMEM_FLAG_WRITE,
                                 SSYS_SHMEM_MODE_PIPE)))
     {
       perror("ssys_shmem_open");
@@ -120,6 +119,45 @@ test_pipe()
     }
 
   fds.events=(POLLIN|POLLOUT);
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==(POLLIN|POLLOUT));
+  assert(rv==1);
+
+  payload=0L;
+  if (0>ssys_shmem_read(fds.fd, &payload, sizeof(long)))
+    {
+      perror("ssys_shmem_read");
+      exit(1);
+    }
+  assert(0xcafebabe==payload);
+
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==POLLOUT);
+  assert(rv==1);
+
+  payload=0xcafecafe;
+  int i;
+  for (i=0; i<SSYS_SHMEM_ELEMENTS; i++)
+    {
+      if (0>ssys_shmem_write(fds.fd, &payload, sizeof(long)))
+        {
+          perror("ssys_shmem_write");
+          exit(1);
+        }
+    }
+
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==POLLIN);
+  assert(rv==1);
+
+  payload=0L;
+  if (0>ssys_shmem_read(fds.fd, &payload, sizeof(long)))
+    {
+      perror("ssys_shmem_read");
+      exit(1);
+    }
+  assert(0xcafecafe==payload);
+
   rv=ssys_shmem_poll(&fds, 1, 0L);
   assert(fds.revents==(POLLIN|POLLOUT));
   assert(rv==1);

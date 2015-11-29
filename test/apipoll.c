@@ -119,6 +119,7 @@ test_pipe()
       exit(1);
     }
 
+  fds.events=(POLLIN|POLLOUT);
   rv=ssys_shmem_poll(&fds, 1, 0L);
   assert(fds.revents==(POLLIN|POLLOUT));
   assert(rv==1);
@@ -147,11 +148,22 @@ test_buffer()
 
   fds.events=POLLIN;
   int rv=ssys_shmem_poll(&fds, 1, 0L);
-  assert(fds.revents==POLLIN);
-  assert(rv==1);
+  assert(fds.revents==0);
+  assert(rv==0);
   fds.events|=POLLOUT;
   rv=ssys_shmem_poll(&fds, 1, 0L);
-  assert(fds.revents==(POLLOUT|POLLIN));
+  assert(fds.revents==POLLOUT);
+  assert(rv==1);
+
+  long payload=0xcafebabe;
+  if (0>ssys_shmem_write(fds.fd, &payload, sizeof(long)))
+    {
+      perror("ssys_shmem_write");
+      exit(1);
+    }
+
+  rv=ssys_shmem_poll(&fds, 1, 0L);
+  assert(fds.revents==(POLLIN|POLLOUT));
   assert(rv==1);
 
   if (0<ssys_shmem_close(fds.fd))

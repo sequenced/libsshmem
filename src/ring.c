@@ -182,25 +182,23 @@ ssys_ring_write(ssys_ring_t *pmd, const void *buf, size_t count)
   return count;
 }
 
+/* A ring is readable iff read descriptor points at a sequence
+ * between tail (inclusive) and head (exclusive). Iff read descriptor
+ * points behind tail then descriptor is adjusted to make ring
+ * readable.
+ */ 
 static inline int
 ring_is_readable(ssys_ring_t *pmd, head_tail_t *ht)
 {
-  if (START_SEQ == ht->head &&
-      UNASSIGNED_SEQ == ht->tail)
-    {
-      /* ring empty */
-      errno=EAGAIN;
-      return -1;
-    }
+  if (START_SEQ == ht->head && UNASSIGNED_SEQ == ht->tail)
+    /* ring empty */
+    return -1;
 
   if (pmd->read_desc >= ht->head)
-    {
-      /* at head, nothing left to read */
-      errno=EAGAIN;
-      return -1;
-    }
+    /* at head, nothing left to read */
+    return -1;
   else if (pmd->read_desc < ht->tail)
-    /* read from tail onwards when in buffer mode */
+    /* read descriptor points behind tail; adjust */
     pmd->read_desc = ht->tail;
 
   return 0;
@@ -223,7 +221,10 @@ ssys_ring_read(ssys_ring_t *pmd, void *buf, size_t count)
   ring_seek_head_tail(pmd, &seqs);
 
   if (0>ring_is_readable(pmd, &seqs))
-    return -1;
+    {
+      errno=EAGAIN;
+      return -1;
+    }
 
   void *el=get_nth_element(pmd, pmd->read_desc);
   atomic_t *lockp=get_lock_ptr(el);
@@ -294,19 +295,23 @@ ssys_ring_poll_read(ssys_ring_t *pmd)
   if (!is_valid(pmd))
     return -1;
 
-  if (SSYS_BIT_ON(SSYS_RING_MODE_BUFFER, pmd->mode))
-    {
-      head_tail_t seqs;
-      ring_seek_head_tail(pmd, &seqs);
-      return ring_is_readable(pmd, &seqs);
-    }
-
-  void *el=get_nth_element(pmd, pmd->read_desc);
-  atomic_t *dirtyp=get_dirty_flag_ptr(el);
-  if (0L==atomic_read(dirtyp))
-    /* already read: page clean */
+  head_tail_t seqs;
+ again:
+  ring_seek_head_tail(pmd, &seqs);
+  if (0>ring_is_readable(pmd, &seqs))
     return 0;
 
-  /* can read: page dirty */
+  if (SSYS_BIT_ON(SSYS_RING_MODE_PIPE, pmd->mode))
+    {
+      void *el=get_nth_element(pmd, pmd->read_desc);
+      atomic_t *dirtyp=get_dirty_flag_ptr(el);
+      if (0L==atomic_read(dirtyp))
+        {
+          /* already read: page clean */
+          pmd->read_desc++;
+          goto again;
+        }
+    }
+
   return 1;
 }

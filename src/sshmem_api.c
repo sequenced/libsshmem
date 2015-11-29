@@ -132,19 +132,19 @@ ssys_shmem_poll(struct pollfd *fds, nfds_t nfds, int ignored)
       if (POLLIN&fds->events)
         {
           rv=ssys_ring_poll_read(&memdesc[fds->fd]);
-          if (rv)
-            fds->revents|=POLLIN;
-          else if (rv<0)
+          if (rv<0)
             fds->revents|=POLLERR;
+          else if (rv)
+            fds->revents|=POLLIN;
         }
 
       if (POLLOUT&fds->events)
         {
           rv=ssys_ring_poll_write(&memdesc[fds->fd]);
-          if (rv)
-            fds->revents|=POLLOUT;
-          else if (rv<0)
+          if (rv<0)
             fds->revents|=POLLERR;
+          else if (rv)
+            fds->revents|=POLLOUT;
         }
 
       /* count selectable descriptors */

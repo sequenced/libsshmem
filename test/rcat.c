@@ -14,6 +14,7 @@ int element_size=RING_ELEMENT_SIZE;
 int header_size=RING_HEADER_SIZE;
 char *payload=0;
 int payload_len=0;
+int printable=0;
 
 int
 main(int argc, char **argv)
@@ -38,13 +39,19 @@ main(int argc, char **argv)
   for (i=0; i<ring.num_elements; i++)
     {
       void *p=((char*)ring.p)+i*ring.element_size;
-      printf("%d: 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx\n",
+      printf("%d: 0x%lx 0x%lx 0x%lx 0x%lx",
              i,
              *(long*)(((char*)p)),
              *(long*)(((char*)p)+sizeof(atomic_t)),
              *(long*)(((char*)p)+2*sizeof(atomic_t)),
-             *(long*)(((char*)p)+3*sizeof(atomic_t)),
-             *(long*)(((char*)p)+ring.header_size));
+             *(long*)(((char*)p)+3*sizeof(atomic_t)));
+
+      if (printable)
+        {
+          printf(" %s\n", (((char*)p)+ring.header_size));
+        }
+      else
+        printf(" 0x%lx\n", *(long*)(((char*)p)+ring.header_size));
     }
 
   free(pathname);

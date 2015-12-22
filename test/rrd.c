@@ -16,6 +16,7 @@ int element_size=RING_ELEMENT_SIZE;
 int header_size=RING_HEADER_SIZE;
 char *payload=0;
 int payload_len=0;
+int printable=0;
 
 int
 main(int argc, char **argv)

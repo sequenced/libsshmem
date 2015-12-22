@@ -15,6 +15,7 @@ int element_size=0;
 int header_size=0;
 char *payload=0;
 int payload_len=0;
+int printable=0;
 
 int
 main(int argc, char **argv)

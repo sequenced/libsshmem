@@ -19,6 +19,7 @@ int element_size=0;
 int header_size=0;
 char *payload=0;
 int payload_len=0;
+int printable=0;
 
 void test_pipe();
 void test_buffer();

@@ -13,14 +13,15 @@ extern int element_size;
 extern int header_size;
 extern char *payload;
 extern int payload_len;
+extern int printable;
 
 static void
 usage()
 {
   fprintf(stderr, "-f <pathname> [-b | -n <number of readers> |\n");
   fprintf(stderr, "-e <number of elements> | -z <element size> |\n");
-  fprintf(stderr, "-h <header size> | -s <payload string> | -c]\n");
-  fprintf(stderr, "where: -b = buffer mode, -c = create shmem file flag\n");
+  fprintf(stderr, "-h <header size> | -s <payload string> | -c | -a]\n");
+  fprintf(stderr, "where:\n\t-b = buffer mode\n\t-c = create shmem file flag\n\t-a = assume null-terminated, printable payload (\"c string\")\n");
 }
 
 void
@@ -28,10 +29,13 @@ test_init(int argc, char **argv)
 {
   int opt;
 
-  while (-1!=(opt=getopt(argc, argv, "cbf:n:e:z:h:s:")))
+  while (-1!=(opt=getopt(argc, argv, "cbaf:n:e:z:h:s:")))
     {
       switch (opt)
         {
+        case 'a':
+          printable=1;
+          break;
         case 'e':
           elements=atoi(optarg);
           break;

@@ -44,7 +44,25 @@ ssys_shmem_open(const char *pathname, int flags, mode_t mode)
   memdesc[md].header_size=SSYS_SHMEM_HEADER_SIZE;
   memdesc[md].mode=mode;
 
-  if (0<alloc_and_map_shmem(&memdesc[md], pathname))
+  int fd;
+  if (0>(fd=ring_shmem_open(pathname)))
+    {
+      if (SSYS_BIT_ON(SSYS_SHMEM_FLAG_CREATE, flags))
+        {
+          if (0>(fd=ring_shmem_create(&memdesc[md], pathname)))
+            return -1;
+        }
+      else
+        {
+          errno=ENOENT;
+          return -1;
+        }
+    }
+  else
+    /* ring existed, no creation necessary */
+    flags=flags&~SSYS_SHMEM_FLAG_CREATE;
+
+  if (0>ring_shmem_map(&memdesc[md], pathname, fd))
     return -1;
 
   return (0<ssys_ring_open(&memdesc[md], flags)?-1:md);
@@ -114,19 +132,19 @@ ssys_shmem_poll(struct pollfd *fds, nfds_t nfds, int ignored)
       if (POLLIN&fds->events)
         {
           rv=ssys_ring_poll_read(&memdesc[fds->fd]);
-          if (rv)
-            fds->revents|=POLLIN;
-          else if (rv<0)
+          if (rv<0)
             fds->revents|=POLLERR;
+          else if (rv)
+            fds->revents|=POLLIN;
         }
 
       if (POLLOUT&fds->events)
         {
           rv=ssys_ring_poll_write(&memdesc[fds->fd]);
-          if (rv)
-            fds->revents|=POLLOUT;
-          else if (rv<0)
+          if (rv<0)
             fds->revents|=POLLERR;
+          else if (rv)
+            fds->revents|=POLLOUT;
         }
 
       /* count selectable descriptors */

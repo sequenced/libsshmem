@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -22,19 +23,32 @@ init_default_ring(ssys_ring_t *pmd)
 }
 
 int
-alloc_and_map_shmem(ssys_ring_t *pmd, const char *name)
+ring_shmem_open(const char *name)
+{
+  return shm_open(name, O_RDWR, S_IRUSR|S_IWUSR);
+}
+
+int
+ring_shmem_create(const ssys_ring_t *pmd, const char *name)
 {
   int fd;
-  if (0>(fd=shm_open(name, O_RDWR, S_IRUSR|S_IWUSR)))
-    if (0>(fd=shm_open(name, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR)))
-      return -1;
+  /* shared memory object does not exist, create it */
+  if (0>(fd=shm_open(name, O_EXCL|O_CREAT|O_RDWR, S_IRUSR|S_IWUSR)))
+    return -1;
 
   if (0>ftruncate(fd, pmd->num_elements*pmd->element_size))
     {
       shm_unlink(name);
+      close(fd);
       return -1;
     }
 
+  return fd;
+}
+
+int
+ring_shmem_map(ssys_ring_t *pmd, const char *name, const int fd)
+{
   if (MAP_FAILED==(pmd->p=mmap(NULL,
                                pmd->num_elements*pmd->element_size,
                                PROT_READ|PROT_WRITE,
@@ -43,11 +57,36 @@ alloc_and_map_shmem(ssys_ring_t *pmd, const char *name)
                                0)))
     {
       shm_unlink(name);
+      close(fd);
       pmd->p=NULL;
       return -1;
     }
 
+  close(fd);
+
   return 0;
+}
+
+int
+alloc_and_map_shmem(ssys_ring_t *pmd, const char *name, int flags)
+{
+  int fd;
+  if (0>(fd=ring_shmem_open(name)))
+    {
+      if (SSYS_BIT_ON(SSYS_RING_FLAG_CREATE, flags))
+        {
+          if (0>(fd=ring_shmem_create(pmd, name)))
+            return -1;
+        }
+      else
+        {
+          errno=ENOENT;
+          return -1;
+        }
+    }
+
+  if (0>ring_shmem_map(pmd, name, fd))
+    return -1;
 }
 
 int

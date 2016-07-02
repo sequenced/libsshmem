@@ -8,7 +8,7 @@
 
 char *pathname=0;
 mode_t mode=SSYS_RING_MODE_PIPE;
-int flags=SSYS_RING_FLAG_WRITE;
+int flags=SSYS_RING_FLAG_WRITE|SSYS_RING_FLAG_CREATE;
 int readers=1;
 int elements=RING_ELEMENTS;
 int element_size=RING_ELEMENT_SIZE;
@@ -22,7 +22,7 @@ main(int argc, char **argv)
   test_init(argc, argv);
   ssys_ring_t ring;
   init_default_ring(&ring);
-  if (0>alloc_and_map_shmem(&ring, pathname))
+  if (0>alloc_and_map_shmem(&ring, pathname, flags))
     {
       perror("alloc_and_map_shmem");
       exit(1);

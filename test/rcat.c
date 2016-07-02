@@ -21,7 +21,7 @@ main(int argc, char **argv)
   test_init(argc, argv);
   ssys_ring_t ring;
   init_default_ring(&ring);
-  if (0>alloc_and_map_shmem(&ring, pathname))
+  if (0>alloc_and_map_shmem(&ring, pathname, flags))
     {
       perror("alloc_and_map_shmem");
       exit(1);
